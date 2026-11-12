@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>통합사회 수준별 진단 & 튜터</title>
+    
+    <!-- PWA Manifest 연결 -->
+    <link rel="manifest" href="?page=manifest">
+    <meta name="theme-color" content="#4f46e5">
+    
+    <!-- Tailwind CSS & Chart.js CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen">
+
+    <!-- 헤더 -->
+    <header class="bg-indigo-600 text-white py-6 px-4 shadow-md">
+        <div class="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+                <h1 class="text-2xl font-bold">고1 통합사회 맞춤형 수준별 진단 & 튜터</h1>
+                <p class="text-indigo-200 text-sm mt-1">객관식 오답 패턴 분석 엔진 기반 수준별 코칭 & 교사용 대시보드</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="toggleManual()" class="bg-white/15 hover:bg-white/25 text-white text-xs px-3 py-1.5 rounded-lg border border-white/20 transition-colors font-medium">
+                    📖 사용 매뉴얼 열기/닫기
+                </button>
+                <button onclick="resetAllData()" class="bg-indigo-700 hover:bg-indigo-800 text-white text-xs px-3 py-1.5 rounded-lg border border-indigo-400/30 transition-colors">
+                    🗑️ 데이터 초기화
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto p-4 md:p-6 space-y-6">
+
+        <!-- 📖 홈 화면 사용 매뉴얼 섹션 -->
+        <section id="manualSection" class="bg-white rounded-xl shadow-sm border border-indigo-100 overflow-hidden transition-all">
+            <div class="bg-indigo-50/80 px-6 py-4 border-b border-indigo-100 flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl">📘</span>
+                    <h2 class="font-bold text-indigo-950 text-base md:text-lg">웹 앱 이용 매뉴얼 및 학습 가이드</h2>
+                </div>
+                <button onclick="toggleManual()" class="text-xs text-indigo-600 hover:text-indigo-800 font-semibold">
+                    접기 ▲
+                </button>
+            </div>
+            
+            <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                <!-- 학생용 가이드 -->
+                <div class="space-y-3 bg-slate-50 p-4 rounded-lg border border-slate-100">
+                    <div class="flex items-center gap-2 font-bold text-indigo-700 text-base">
+                        <span>🎓 학생용 이용 순서</span>
+                    </div>
+                    <ol class="list-decimal list-inside space-y-2 text-slate-600 leading-relaxed">
+                        <li><strong>정보 입력 및 객관식 풀이:</strong> 학번과 이름을 적은 뒤 통합사회 3문항의 알맞은 보기를 선택합니다.</li>
+                        <li><strong>오답 패턴 정밀 진단:</strong> 선택한 오답 선지를 분석해 <span class="text-emerald-600 font-semibold">[심화]</span>, <span class="text-amber-600 font-semibold">[기초]</span>, <span class="text-rose-600 font-semibold">[오개념]</span> 유형을 즉시 판정합니다.</li>
+                        <li><strong>1:1 맞춤형 튜터링:</strong> 하단 대화창에서 오개념 교정 피드백을 확인하고 궁금한 개념을 질문합니다.</li>
+                        <li><strong>개인 대시보드 확인:</strong> 상단 <strong>[2. 개인 학습 대시보드]</strong> 탭에서 점수 변화 추이와 취약 단원을 점검합니다.</li>
+                    </ol>
+                </div>
+
+                <!-- 교사용 가이드 -->
+                <div class="space-y-3 bg-slate-50 p-4 rounded-lg border border-slate-100">
+                    <div class="flex items-center gap-2 font-bold text-slate-800 text-base">
+                        <span>👩‍🏫 교사용 지도 및 관리 안내</span>
+                    </div>
+                    <ul class="list-disc list-inside space-y-2 text-slate-600 leading-relaxed">
+                        <li><strong>학급 오개념 모니터링:</strong> <strong>[3. 학급 오개념 대시보드]</strong> 탭에서 제출된 학생들의 전체 평균과 오개념 비율을 확인합니다.</li>
+                        <li><strong>우선 지도 대상자 파악:</strong> 하단 제출 현황 표에서 학생이 고른 오답 기반 오개념 원인을 파악해 개별 지도합니다.</li>
+                        <li><strong>PWA 앱 설치:</strong> 모바일 브라우저 메뉴에서 <em>'홈 화면에 추가'</em>를 누르면 일반 앱처럼 설치해 사용할 수 있습니다.</li>
+                        <li><strong>기록 초기화:</strong> 새로운 학급이나 차시 수업을 시작할 때 우측 상단 <strong>[데이터 초기화]</strong>를 누르세요.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- 탭 네비게이션 -->
+        <div class="flex border-b border-slate-200 gap-2 md:gap-4 text-sm md:text-base font-semibold overflow-x-auto">
+            <button id="tabNavDiag" onclick="switchTab('diagnostic')" class="py-2 px-3 md:px-4 border-b-2 border-indigo-600 text-indigo-600 whitespace-nowrap">1. 객관식 진단 평가 & 튜터</button>
+            <button id="tabNavDash" onclick="switchTab('dashboard')" class="py-2 px-3 md:px-4 border-b-2 border-transparent text-slate-500 hover:text-indigo-600 whitespace-nowrap">2. 개인 학습 대시보드</button>
+            <button id="tabNavTeacher" onclick="switchTab('teacher')" class="py-2 px-3 md:px-4 border-b-2 border-transparent text-slate-500 hover:text-indigo-600 whitespace-nowrap flex items-center gap-1">
+                <span>👩‍🏫 3. 학급 오개념 대시보드(교사용)</span>
+            </button>
+        </div>
+
+        <!-- 탭 1: 객관식 진단 평가 & 튜터 섹션 -->
+        <section id="sectionDiagnostic" class="space-y-6">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                <h2 class="text-xl font-bold text-slate-900 mb-4 pb-2 border-b">📝 1학년 통합사회 개념 진단 평가 (객관식)</h2>
+                <form id="diagnosticForm" class="space-y-8">
+                    <!-- 학생 정보 입력 -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-lg border border-slate-200">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">학번 (예: 10101)</label>
+                            <input type="text" id="studentId" placeholder="학번 입력" class="w-full p-2 border rounded border-slate-300 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">이름</label>
+                            <input type="text" id="studentName" placeholder="이름 입력" class="w-full p-2 border rounded border-slate-300 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                        </div>
+                    </div>
+
+                    <!-- Q1 객관식 -->
+                    <div class="space-y-3">
+                        <p class="font-semibold text-slate-900">
+                            Q1. [자산 관리와 금융] 자산 관리의 3대 요소인 안전성, 수익성, 유동성에 대한 설명으로 가장 옳은 것은?
+                        </p>
+                        <div class="space-y-2 pl-1">
+                            <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-indigo-50/50 cursor-pointer transition-colors">
+                                <input type="radio" name="q1" value="1" class="w-4 h-4 text-indigo-600">
+                                <span class="text-sm text-slate-700">① 주식은 예금에 비해 원금 손실 위험이 낮아 안전성이 매우 높다.</span>
+                            </label>
+                            <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-indigo-50/50 cursor-pointer transition-colors">
+                                <input type="radio" name="q1" value="2" class="w-4 h-4 text-indigo-600">
+                                <span class="text-sm text-slate-700">② 유동성은 자산을 필요할 때 손쉽게 현금으로 전환할 수 있는 정도를 말한다.</span>
+                            </label>
+                            <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-indigo-50/50 cursor-pointer transition-colors">
+                                <input type="radio" name="q1" value="3" class="w-4 h-4 text-indigo-600">
+                                <span class="text-sm text-slate-700">③ 일반적으로 안전성이 높은 금융 상품일수록 수익성도 함께 높아진다.</span>
+                            </label>
+                            <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-indigo-50/50 cursor-pointer transition-colors">
+                                <input type="radio" name="q1" value="4" class="w-4 h-4 text-indigo-600">
+                                <span class="text-sm text-slate-700">④ 부동산은 현금화가 매우 빠르기 때문에 유동성이 가장 높은 자산이다.</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Q2 객관식 -->
+                    <div class="space-y-3">
+                        <p class="font-semibold text-slate-900">
+                            Q2. [인권 보장과 헌법] 우리나라 헌법 제37조 제2항에 따른 기본권 제한의 원리와 한계에 대한 설명으로 옳은 것은?
+                        </p>
+                        <div class="space-y-2 pl-1">
+                            <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-indigo-50/50 cursor-pointer transition-colors">
+                                <input type="radio" name="q2" value="1" class="w-4 h-4 text-indigo-600">
+                                <span class="text-sm text-slate-700">① 국가안전보장을 위해서라면 대통령의 명령만으로 자유와 권리를 무제한 제한할 수 있다.</span>
+                            </label>
+                            <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-indigo-50/50 cursor-pointer transition-colors">
+                                <input type="radio" name="q2" value="2" class="w-4 h-4 text-indigo-600">
+                                <span class="text-sm text-slate-700">② 공공복리를 위해 필요한 경우 국회가 제정한 법률로써 기본권의 본질적인 내용까지 침해할 수 있다.</span>
+                            </label>
+                            <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-indigo-50/50 cursor-pointer transition-colors">
+                                <input type="radio" name="q2" value="3" class="w-4 h-4 text-indigo-600">
+                                <span class="text-sm text-slate-700">③ 질서유지를 위해 필요한 경우에 한하여 법률로써 제한할 수 있으나, 자유와 권리의 본질적인 내용은 침해할 수 없다.</span>
+                            </label>
+                            <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-indigo-50/50 cursor-pointer transition-colors">
+                                <input type="radio" name="q2" value="4" class="w-4 h-4 text-indigo-600">
+                                <span class="text-sm text-slate-700">④ 헌법에 열거되지 아니한 자유와 권리는 국가안전보장을 위해 언제든 박탈할 수 있다.</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Q3 객관식 -->
+                    <div class="space-y-3">
+                        <p class="font-semibold text-slate-900">
+                            Q3. [자본주의와 경제] 시장 실패의 원인 중 하나인 '외부 불경제(부정적 외부 효과)'에 해당하는 사례와 해결 방안으로 옳은 것은?
+                        </p>
+                        <div class="space-y-2 pl-1">
+                            <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-indigo-50/50 cursor-pointer transition-colors">
+                                <input type="radio" name="q3" value="1" class="w-4 h-4 text-indigo-600">
+                                <span class="text-sm text-slate-700">① 기업이 신기술을 개발해 사회 전체에 이익을 주었으므로 정부가 세금을 무겁게 부과한다.</span>
+                            </label>
+                            <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-indigo-50/50 cursor-pointer transition-colors">
+                                <input type="radio" name="q3" value="2" class="w-4 h-4 text-indigo-600">
+                                <span class="text-sm text-slate-700">② 공장이 폐수를 무단 방류해 주변 주민에게 피해를 주었으나 대가를 치르지 않으므로 환경세를 부과한다.</span>
+                            </label>
+                            <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-indigo-50/50 cursor-pointer transition-colors">
+                                <input type="radio" name="q3" value="3" class="w-4 h-4 text-indigo-600">
+                                <span class="text-sm text-slate-700">③ 과수원 옆 양봉업자가 꿀을 더 많이 생산하게 되었으므로 과수원 주인에게 벌금을 부과한다.</span>
+                            </label>
+                            <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-indigo-50/50 cursor-pointer transition-colors">
+                                <input type="radio" name="q3" value="4" class="w-4 h-4 text-indigo-600">
+                                <span class="text-sm text-slate-700">④ 독과점 기업이 가격을 담합하여 소비자가 피해를 입는 현상으로 보조금을 지급해 생산을 늘린다.</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <button type="button" onclick="analyzeAnswers()" id="btnAnalyze"
+                            class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-lg transition-colors shadow-sm">
+                        답안 제출 및 수준 진단 시작하기
+                    </button>
+                </form>
+            </div>
+
+            <!-- 진단 결과 및 1:1 Q&A 튜터링 영역 -->
+            <div id="tutorResultArea" class="hidden bg-white p-6 rounded-xl shadow-sm border border-slate-100 space-y-6">
+                <div class="p-4 rounded-lg bg-indigo-50 border border-indigo-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <span class="text-sm font-bold text-indigo-600 uppercase tracking-wider">진단 평가 결과</span>
+                        <h3 class="text-2xl font-bold mt-1" id="levelResultTitle">분석 중...</h3>
+                        <p class="text-slate-600 text-sm mt-1" id="levelResultDesc"></p>
+                    </div>
+                    <span id="levelBadge" class="px-4 py-2 rounded-full font-bold text-white bg-indigo-600">진단 진행 중</span>
+                </div>
+
+                <div class="border rounded-xl p-4 bg-slate-50 space-y-4">
+                    <h4 class="font-bold text-slate-800 flex items-center gap-2">
+                        🤖 1:1 맞춤형 튜터링 대화방
+                    </h4>
+                    
+                    <div id="chatHistory" class="h-64 overflow-y-auto space-y-3 bg-white p-4 rounded-lg border border-slate-200"></div>
+
+                    <div class="flex gap-2">
+                        <input type="text" id="chatInput" placeholder="이해가 안 가는 개념이나 질문을 입력해 보세요... (예: 유동성, 본질적 내용, 외부 불경제)" 
+                               onkeydown="if(event.key === 'Enter') sendChatMessage()"
+                               class="flex-1 p-3 border rounded-lg border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                        <button onclick="sendChatMessage()" id="btnSendChat" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-3 rounded-lg font-bold">
+                            전송
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 탭 2: 개인별 학습 분석 대시보드 -->
+        <section id="sectionDashboard" class="hidden space-y-6">
+            <h2 class="text-xl font-bold text-slate-900">📊 개인별 학습 분석 대시보드</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100">
+                    <p class="text-sm font-semibold text-slate-500">종합 정답률 (평균)</p>
+                    <p class="text-3xl font-extrabold text-indigo-600 mt-2" id="dashAvgScore">0점</p>
+                    <p class="text-xs text-slate-400 mt-1" id="dashTryCount">총 0회 진단 실시</p>
+                </div>
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100">
+                    <p class="text-sm font-semibold text-slate-500">최근 학습 수준</p>
+                    <p class="text-3xl font-extrabold text-slate-800 mt-2" id="dashCurrentLevel">기록 없음</p>
+                    <p class="text-xs text-slate-500 mt-1">최근 제출 기준</p>
+                </div>
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100">
+                    <p class="text-sm font-semibold text-slate-500">주요 취약 영역</p>
+                    <p class="text-2xl font-extrabold text-rose-500 mt-2 truncate" id="dashWeakArea">기록 없음</p>
+                    <p class="text-xs text-slate-400 mt-1">오개념 발견 항목</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100">
+                    <h3 class="font-bold text-slate-800 mb-4">📈 성취도 점수 변화 추이</h3>
+                    <div class="h-64 flex items-center justify-center">
+                        <canvas id="trendChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100">
+                    <h3 class="font-bold text-slate-800 mb-4">🎯 나의 수준 유형 비율</h3>
+                    <div class="h-64 flex justify-center items-center">
+                        <canvas id="weaknessChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 탭 3: 교사용 학급 전체 오개념 대시보드 -->
+        <section id="sectionTeacher" class="hidden space-y-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-900">👩‍🏫 학급 전체 실시간 학습 데이터 대시보드</h2>
+                    <p class="text-slate-500 text-sm mt-1">학생들이 제출한 실제 객관식 응답 데이터를 실시간으로 집계합니다.</p>
+                </div>
+            </div>
+
+            <!-- 요약 카드 -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+                    <p class="text-xs font-semibold text-slate-500">총 제출 건수</p>
+                    <p class="text-2xl font-bold text-slate-800 mt-1" id="tCardTotal">0건</p>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+                    <p class="text-xs font-semibold text-slate-500">학급 평균 점수</p>
+                    <p class="text-2xl font-bold text-indigo-600 mt-1" id="tCardAvg">0점</p>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+                    <p class="text-xs font-semibold text-rose-500">오개념 제출 건수</p>
+                    <p class="text-2xl font-bold text-rose-600 mt-1" id="tCardMisconcept">0건</p>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+                    <p class="text-xs font-semibold text-amber-500">기초 부족 건수</p>
+                    <p class="text-2xl font-bold text-amber-600 mt-1" id="tCardBasic">0건</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white p-5 rounded-xl border border-slate-100 shadow-sm">
+                    <h3 class="font-bold text-slate-800 mb-4">👥 제출 학생 이해 수준 분포</h3>
+                    <div class="h-64 flex justify-center items-center">
+                        <canvas id="classLevelChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-xl border border-slate-100 shadow-sm">
+                    <h3 class="font-bold text-slate-800 mb-4">⚠️ 단원별 오개념 집중 발생 현황</h3>
+                    <div class="h-64 flex items-center justify-center">
+                        <canvas id="classMisconceptChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 실시간 응답 기록 테이블 -->
+            <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-5">
+                <h3 class="font-bold text-slate-800 mb-3 flex items-center gap-2">
+                    <span>📋 학생 제출 현황 목록</span>
+                    <span class="text-xs font-normal bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full" id="tTableCount">총 0명 제출</span>
+                </h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-slate-600">
+                        <thead class="text-xs text-slate-700 uppercase bg-slate-50 border-b">
+                            <tr>
+                                <th class="px-4 py-3">제출 시간</th>
+                                <th class="px-4 py-3">학번/이름</th>
+                                <th class="px-4 py-3">판정 수준</th>
+                                <th class="px-4 py-3">취약 개념/오개념 내역</th>
+                            </tr>
+                        </thead>
+                        <tbody id="teacherTableBody" class="divide-y divide-slate-100">
+                            <tr>
+                                <td colspan="4" class="px-4 py-6 text-center text-slate-400">아직 제출된 진단 기록이 없습니다.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // PWA Service Worker 등록
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('?page=sw')
+                    .then(reg => console.log('Service Worker 등록 성공:', reg.scope))
+                    .catch(err => console.log('Service Worker 등록 실패:', err));
+            });
+        }
+
+        // 매뉴얼 섹션 접기/펼치기 제어
+        function toggleManual() {
+            const manual = document.getElementById('manualSection');
+            manual.classList.toggle('hidden');
+        }
+
+        // 로컬 데이터 관리 함수 (localStorage 연동)
+        function getStoredRecords() {
+            const data = localStorage.getItem('tutor_records');
+            return data ? JSON.parse(data) : [];
+        }
+
+        function saveRecord(record) {
+            const records = getStoredRecords();
+            records.push(record);
+            localStorage.setItem('tutor_records', JSON.stringify(records));
+        }
+
+        function resetAllData() {
+            if (confirm("모든 진단 기록과 대시보드 데이터를 초기화하시겠습니까?")) {
+                localStorage.removeItem('tutor_records');
+                alert("모든 데이터가 초기화되었습니다.");
+                location.reload();
+            }
+        }
+
+        // 탭 전환 제어
+        function switchTab(tab) {
+            const diagSec = document.getElementById('sectionDiagnostic');
+            const dashSec = document.getElementById('sectionDashboard');
+            const teacherSec = document.getElementById('sectionTeacher');
+            
+            const tabDiag = document.getElementById('tabNavDiag');
+            const tabDash = document.getElementById('tabNavDash');
+            const tabTeacher = document.getElementById('tabNavTeacher');
+
+            diagSec.classList.add('hidden');
+            dashSec.classList.add('hidden');
+            teacherSec.classList.add('hidden');
+
+            tabDiag.className = "py-2 px-3 md:px-4 border-b-2 border-transparent text-slate-500 hover:text-indigo-600 whitespace-nowrap";
+            tabDash.className = "py-2 px-3 md:px-4 border-b-2 border-transparent text-slate-500 hover:text-indigo-600 whitespace-nowrap";
+            tabTeacher.className = "py-2 px-3 md:px-4 border-b-2 border-transparent text-slate-500 hover:text-indigo-600 whitespace-nowrap";
+
+            if (tab === 'diagnostic') {
+                diagSec.classList.remove('hidden');
+                tabDiag.className = "py-2 px-3 md:px-4 border-b-2 border-indigo-600 text-indigo-600 whitespace-nowrap";
+            } else if (tab === 'dashboard') {
+                dashSec.classList.remove('hidden');
+                tabDash.className = "py-2 px-3 md:px-4 border-b-2 border-indigo-600 text-indigo-600 whitespace-nowrap";
+                renderStudentDashboard();
+            } else if (tab === 'teacher') {
+                teacherSec.classList.remove('hidden');
+                tabTeacher.className = "py-2 px-3 md:px-4 border-b-2 border-indigo-600 text-indigo-600 whitespace-nowrap";
+                renderTeacherDashboard();
+            }
+        }
+
+        // --- 객관식 오답 패턴 기반 정밀 오개념 진단 엔진 ---
+        // 수정 가능한 정답 및 오개념 매핑 변수:
+        // Q1 정답: '2', Q2 정답: '3', Q3 정답: '2'
+        function evaluateStudentAnswers(q1Val, q2Val, q3Val) {
+            let points = 0;
+            let misconceptions = [];
+            let weakChapter = "없음";
+            let isBasicLack = false;
+
+            // Q1 채점 (정답: 2번)
+            if (q1Val === '2') {
+                points += 33;
+            } else {
+                weakChapter = "자산 관리와 금융";
+                if (q1Val === '1') {
+                    isBasicLack = true;
+                    misconceptions.push("[자산관리] 주식과 예금의 원금 손실 위험(안전성) 기초 개념 미숙지");
+                } else if (q1Val === '3') {
+                    misconceptions.push("[자산관리 오개념] 안전성과 수익성이 비례한다는 잘못된 오개념 보유 (실제로는 상충 관계)");
+                } else if (q1Val === '4') {
+                    misconceptions.push("[자산관리 오개념] 부동산의 현금화 속도(유동성)를 높다고 착각하는 오개념");
+                }
+            }
+
+            // Q2 채점 (정답: 3번)
+            if (q2Val === '3') {
+                points += 33;
+            } else {
+                weakChapter = "인권 보장과 헌법";
+                if (q2Val === '1') {
+                    isBasicLack = true;
+                    misconceptions.push("[헌법] 기본권 제한의 형식적 요건('법률'에 의한 제한) 기초 미숙지");
+                } else if (q2Val === '2') {
+                    misconceptions.push("[헌법 오개념] 공공복리를 위해서는 '본질적 내용'까지 침해할 수 있다는 심각한 오개념");
+                } else if (q2Val === '4') {
+                    misconceptions.push("[헌법 오개념] 헌법에 열거되지 않은 권리는 경시되어도 된다는 오개념 (헌법 제37조 1항 위배)");
+                }
+            }
+
+            // Q3 채점 (정답: 2번)
+            if (q3Val === '2') {
+                points += 34;
+            } else {
+                weakChapter = "자본주의와 경제";
+                if (q3Val === '1') {
+                    misconceptions.push("[경제 오개념] 긍정적 외부 효과(외부 경제)와 부정적 외부 효과(외부 불경제)의 정부 개입 방향 혼동");
+                } else if (q3Val === '3') {
+                    misconceptions.push("[경제 오개념] 외부 경제 사례(양봉업자와 과수원)를 외부 불경제로 잘못 해석");
+                } else if (q3Val === '4') {
+                    isBasicLack = true;
+                    misconceptions.push("[경제] 시장 실패의 유형(독과점 vs 외부 효과) 구분 기초 부족");
+                }
+            }
+
+            // 종합 수준 판정 로직
+            let level = "기초";
+            let feedback = "";
+
+            if (points === 100) {
+                level = "심화";
+                feedback = "완벽합니다! 3개 단원의 핵심 개념을 정확히 이해하고 함정 선지까지 모두 피해 갔습니다. 심화 학습으로 '실생활 속 외부 효과 사례와 정부 정책 비교'를 추천합니다.";
+            } else if (misconceptions.some(m => m.includes('오개념'))) {
+                level = "오개념";
+                feedback = `선택하신 오답 분석 결과, 다음과 같은 <strong>개념적 오해(오개념)</strong>가 발견되었습니다:<br><br>• ${misconceptions.join('<br>• ')}<br><br>아래 대화방에서 헷갈리는 용어를 질문하여 바로잡아 보세요!`;
+            } else {
+                level = "기초";
+                feedback = `핵심 개념의 기초 다지기가 필요합니다:<br><br>• ${misconceptions.join('<br>• ')}<br><br>교과서 기본 용어부터 차근차근 복습해 봅시다.`;
+            }
+
+            return { points, level, feedback, misconceptions, weakChapter };
+        }
+
+        // 답안 제출 및 저장
+        function analyzeAnswers() {
+            const sId = document.getElementById('studentId').value.trim() || '미입력';
+            const sName = document.getElementById('studentName').value.trim() || '학생';
+
+            const q1Selected = document.querySelector('input[name="q1"]:checked');
+            const q2Selected = document.querySelector('input[name="q2"]:checked');
+            const q3Selected = document.querySelector('input[name="q3"]:checked');
+
+            if (!q1Selected || !q2Selected || !q3Selected) {
+                alert("1번, 2번, 3번 객관식 문항의 답안을 모두 선택해주세요!");
+                return;
+            }
+
+            const evalResult = evaluateStudentAnswers(q1Selected.value, q2Selected.value, q3Selected.value);
+
+            const now = new Date();
+            const timeStr = `${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+            
+            saveRecord({
+                timestamp: timeStr,
+                studentId: sId,
+                studentName: sName,
+                score: evalResult.points,
+                level: evalResult.level,
+                misconceptions: evalResult.misconceptions,
+                weakChapter: evalResult.weakChapter
+            });
+
+            const resultArea = document.getElementById('tutorResultArea');
+            resultArea.classList.remove('hidden');
+
+            let badgeBg = "bg-amber-500";
+            if (evalResult.level === "심화") badgeBg = "bg-emerald-600";
+            if (evalResult.level === "오개념") badgeBg = "bg-rose-600";
+
+            document.getElementById('levelResultTitle').innerText = `${evalResult.level} 학습자 유형 (${evalResult.points}점)`;
+            document.getElementById('levelResultDesc').innerText = `${sName} 학생의 객관식 답안 진단이 완료되었습니다.`;
+            
+            const badge = document.getElementById('levelBadge');
+            badge.className = `px-4 py-2 rounded-full font-bold text-white ${badgeBg}`;
+            badge.innerText = `${evalResult.level} 유형`;
+
+            const chatHistory = document.getElementById('chatHistory');
+            chatHistory.innerHTML = `
+                <div class="bg-indigo-50 p-3 rounded-lg text-slate-800 text-sm leading-relaxed border border-indigo-100">
+                    <span class="font-bold text-indigo-600 block mb-1">🤖 맞춤형 튜터</span>
+                    안녕하세요 <strong>${sName}</strong> 학생! 제출하신 객관식 답안을 분석한 결과 <strong>[${evalResult.level}]</strong> 유형으로 판정되었습니다.<br><br>
+                    ${evalResult.feedback}<br><br>
+                    헷갈리는 보기나 개념이 있다면 아래에 질문해 주세요!
+                </div>
+            `;
+            
+            // 결과 영역으로 부드럽게 스크롤 이동
+            resultArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        // Q&A 대화 인터랙션
+        function sendChatMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            if (!message) return;
+
+            const chatHistory = document.getElementById('chatHistory');
+
+            chatHistory.innerHTML += `
+                <div class="bg-slate-100 p-3 rounded-lg text-slate-800 text-sm text-right ml-12">
+                    <span class="font-bold text-slate-600 block mb-1">나</span>
+                    ${message}
+                </div>
+            `;
+
+            input.value = '';
+
+            let reply = "좋은 질문입니다! 문제의 보기 중 헷갈렸던 키워드(예: <strong>유동성, 수익성, 본질적 내용, 외부 불경제</strong>)를 포함해서 질문해 주시면 오답 이유를 자세히 짚어드릴게요!";
+            const msgLower = message.toLowerCase();
+            
+            if (msgLower.includes('외부') || msgLower.includes('불경제') || msgLower.includes('양봉')) {
+                reply = "<strong>외부 불경제(부정적 외부 효과)</strong>는 폐수 방류처럼 타인에게 피해를 주면서도 대가를 치르지 않는 현상으로, 세금(환경세) 부과로 해결합니다. 반면 양봉업자와 과수원 사례는 서로 이익을 주는 <strong>외부 경제(긍정적 외부 효과)</strong>이므로 보조금 지급 대상입니다!";
+            } else if (msgLower.includes('자유') || msgLower.includes('권리') || msgLower.includes('기본권') || msgLower.includes('본질')) {
+                reply = "헌법 제37조 제2항에 따라 기본권은 국가안전보장·질서유지·공공복리를 위해 <strong>국회가 제정한 법률</strong>로만 제한할 수 있으며, 설령 제한하더라도 <strong>자유와 권리의 본질적인 내용</strong>은 절대 침해할 수 없습니다.";
+            } else if (msgLower.includes('자산') || msgLower.includes('안전') || msgLower.includes('수익') || msgLower.includes('유동') || msgLower.includes('부동산')) {
+                reply = "자산 관리에서는 <strong>안전성과 수익성이 일반적으로 반비례(상충)</strong>합니다. 또한 부동산은 매매에 시간이 오래 걸리므로 <strong>유동성(현금화 용이성)이 낮고</strong>, 예금이나 현금이 유동성이 높습니다.";
+            }
+
+            setTimeout(() => {
+                chatHistory.innerHTML += `
+                    <div class="bg-indigo-50 p-3 rounded-lg text-slate-800 text-sm leading-relaxed border border-indigo-100">
+                        <span class="font-bold text-indigo-600 block mb-1">🤖 맞춤형 튜터</span>
+                        ${reply}
+                    </div>
+                `;
+                chatHistory.scrollTop = chatHistory.scrollHeight;
+            }, 300);
+        }
+
+        let charts = {};
+
+        // 1. 개인별 실시간 대시보드 렌더링
+        function renderStudentDashboard() {
+            const records = getStoredRecords();
+
+            if (records.length === 0) {
+                document.getElementById('dashAvgScore').innerText = "0점";
+                document.getElementById('dashTryCount').innerText = "총 0회 진단 실시";
+                document.getElementById('dashCurrentLevel').innerText = "기록 없음";
+                document.getElementById('dashWeakArea').innerText = "기록 없음";
+                return;
+            }
+
+            const totalScore = records.reduce((acc, r) => acc + r.score, 0);
+            const avgScore = Math.round(totalScore / records.length);
+            const lastRecord = records[records.length - 1];
+
+            document.getElementById('dashAvgScore').innerText = `${avgScore}점`;
+            document.getElementById('dashTryCount').innerText = `총 ${records.length}회 진단 실시`;
+            document.getElementById('dashCurrentLevel').innerText = lastRecord.level;
+            document.getElementById('dashWeakArea').innerText = lastRecord.weakChapter;
+
+            if (charts.trend) charts.trend.destroy();
+            if (charts.weakness) charts.weakness.destroy();
+
+            const ctx1 = document.getElementById('trendChart').getContext('2d');
+            charts.trend = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: records.map((r, i) => `${i+1}회차 (${r.timestamp})`),
+                    datasets: [{
+                        label: '나의 진단 점수',
+                        data: records.map(r => r.score),
+                        borderColor: '#4f46e5',
+                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                        fill: true,
+                        tension: 0.2
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 100 } } }
+            });
+
+            const levelCounts = { '심화': 0, '기초': 0, '오개념': 0 };
+            records.forEach(r => { levelCounts[r.level] = (levelCounts[r.level] || 0) + 1; });
+
+            const ctx2 = document.getElementById('weaknessChart').getContext('2d');
+            charts.weakness = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: ['심화', '기초', '오개념'],
+                    datasets: [{
+                        data: [levelCounts['심화'], levelCounts['기초'], levelCounts['오개념']],
+                        backgroundColor: ['#10b981', '#f59e0b', '#f43f5e']
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        // 2. 교사용 학급 전체 실시간 대시보드 렌더링
+        function renderTeacherDashboard() {
+            const records = getStoredRecords();
+            const tableBody = document.getElementById('teacherTableBody');
+            
+            if (records.length === 0) {
+                document.getElementById('tCardTotal').innerText = "0건";
+                document.getElementById('tCardAvg').innerText = "0점";
+                document.getElementById('tCardMisconcept').innerText = "0건";
+                document.getElementById('tCardBasic').innerText = "0건";
+                document.getElementById('tTableCount').innerText = "총 0명 제출";
+                tableBody.innerHTML = `<tr><td colspan="4" class="px-4 py-6 text-center text-slate-400">아직 제출된 진단 기록이 없습니다.</td></tr>`;
+                return;
+            }
+
+            const totalCount = records.length;
+            const avgScore = Math.round(records.reduce((a, b) => a + b.score, 0) / totalCount);
+            const misCount = records.filter(r => r.level === '오개념').length;
+            const basicCount = records.filter(r => r.level === '기초').length;
+
+            document.getElementById('tCardTotal').innerText = `${totalCount}건`;
+            document.getElementById('tCardAvg').innerText = `${avgScore}점`;
+            document.getElementById('tCardMisconcept').innerText = `${misCount}건`;
+            document.getElementById('tCardBasic').innerText = `${basicCount}건`;
+            document.getElementById('tTableCount').innerText = `총 ${totalCount}명 제출`;
+
+            tableBody.innerHTML = records.map(r => `
+                <tr>
+                    <td class="px-4 py-3 text-xs text-slate-400">${r.timestamp}</td>
+                    <td class="px-4 py-3 font-medium text-slate-900">${r.studentId} ${r.studentName}</td>
+                    <td class="px-4 py-3">
+                        <span class="px-2 py-1 rounded text-xs font-bold ${r.level==='심화'?'bg-emerald-100 text-emerald-700':r.level==='오개념'?'bg-rose-100 text-rose-700':'bg-amber-100 text-amber-700'}">
+                            ${r.level} (${r.score}점)
+                        </span>
+                    </td>
+                    <td class="px-4 py-3 text-xs">${r.misconceptions.length > 0 ? r.misconceptions.join(' / ') : '특이 오개념 없음 (모든 문항 정답)'}</td>
+                </tr>
+            `).reverse().join('');
+
+            if (charts.classLevel) charts.classLevel.destroy();
+            if (charts.classMisconcept) charts.classMisconcept.destroy();
+
+            const levelCounts = { '심화': 0, '기초': 0, '오개념': 0 };
+            records.forEach(r => { levelCounts[r.level]++; });
+
+            const ctx1 = document.getElementById('classLevelChart').getContext('2d');
+            charts.classLevel = new Chart(ctx1, {
+                type: 'doughnut',
+                data: {
+                    labels: ['심화 이해', '기초 수준', '오개념 형성'],
+                    datasets: [{
+                        data: [levelCounts['심화'], levelCounts['기초'], levelCounts['오개념']],
+                        backgroundColor: ['#10b981', '#f59e0b', '#f43f5e']
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+
+            const chapterCounts = { '자산 관리와 금융': 0, '인권 보장과 헌법': 0, '자본주의와 경제': 0 };
+            records.forEach(r => {
+                if (r.weakChapter !== '없음') {
+                    chapterCounts[r.weakChapter] = (chapterCounts[r.weakChapter] || 0) + 1;
+                }
+            });
+
+            const ctx2 = document.getElementById('classMisconceptChart').getContext('2d');
+            charts.classMisconcept = new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(chapterCounts),
+                    datasets: [{
+                        label: '취약/오개념 발생 건수',
+                        data: Object.values(chapterCounts),
+                        backgroundColor: '#6366f1',
+                        borderRadius: 6
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, stepSize: 1 } } }
+            });
+        }
+    </script>
+</body>
+</html>
